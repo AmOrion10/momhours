@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f766e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>MomHours – Cayman Work Log</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root {
+      --primary: #0f766e;
+      --primary-dark: #0d5c56;
+      --primary-light: #14b8a6;
+      --bg: #f0fdfa;
+      --card: #ffffff;
+      --text: #134e4a;
+      --muted: #5eead4;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --success: #059669;
+      --border: #99f6e4;
+      --shadow: 0 4px 12px rgba(15, 118, 110, 0.12);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100dvh;
+      padding-bottom: 90px;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 16px 20px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+
+    header h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    header .subtitle {
+      font-size: 0.85rem;
+      opacity: 0.9;
+      margin-top: 2px;
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+      z-index: 100;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.06);
+    }
+
+    nav button {
+      background: none;
+      border: none;
+      font-size: 0.7rem;
+      color: #64748b;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      cursor: pointer;
+      border-radius: 12px;
+      min-width: 64px;
+    }
+
+    nav button.active {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    nav button span.icon {
+      font-size: 1.4rem;
+    }
+
+    /* Main content */
+    main {
+      padding: 16px;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .card h2 {
+      font-size: 1.05rem;
+      margin-bottom: 12px;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Summary numbers */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .stat {
+      background: #f0fdfa;
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .stat .label {
+      font-size: 0.75rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .stat .value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 2px;
+    }
+
+    .stat.highlight {
+      background: linear-gradient(135deg, #ccfbf1, #99f6e4);
+    }
+
+    .stat.highlight .value {
+      color: var(--primary-dark);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+
+    .btn-secondary:hover {
+      background: #f0fdfa;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+    }
+
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+
+    .btn-success {
+      background: var(--success);
+    }
+
+    .btn-warning {
+      background: var(--warning);
+    }
+
+    .btn-sm {
+      padding: 8px 14px;
+      font-size: 0.875rem;
+      width: auto;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .btn-row .btn {
+      flex: 1;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 1rem;
+      background: white;
+      color: var(--text);
+      transition: border-color 0.15s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .hint {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    .break-suggestion {
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.85rem;
+      margin-top: 8px;
+      display: none;
+    }
+
+    .break-suggestion.visible {
+      display: block;
+    }
+
+    /* Shift list */
+    .shift-list {
+      list-style: none;
+    }
+
+    .shift-item {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .shift-item .info {
+      flex: 1;
+    }
+
+    .shift-item .date {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .shift-item .times {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .shift-item .hours {
+      font-weight: 600;
+      color: var(--primary);
+      font-size: 1.05rem;
+      white-space: nowrap;
+    }
+
+    .shift-item .amount {
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+
+    .shift-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .shift-actions button {
+      background: #f1f5f9;
+      border: none;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      color: #475569;
+    }
+
+    .shift-actions button:hover {
+      background: #e2e8f0;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #94a3b8;
+    }
+
+    .empty-state .icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+
+    /* Paid history groups */
+    .period-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .period-card .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .period-card .range {
+      font-weight: 700;
+    }
+
+    .period-card .total {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--success);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90dvh;
+      overflow-y: auto;
+      padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+      animation: slideUp 0.25s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal h3 {
+      font-size: 1.2rem;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal .close-btn {
+      background: #f1f5f9;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1e293b;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      opacity: 0;
+      transition: all 0.25s;
+      z-index: 300;
+      pointer-events: none;
+      max-width: 90%;
+      text-align: center;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Settings */
+    .rate-display {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-align: center;
+      margin: 8px 0 16px;
+    }
+
+    /* Calendar simple */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      text-align: center;
+      font-size: 0.8rem;
+    }
+
+    .calendar-grid .day-name {
+      font-weight: 600;
+      color: #64748b;
+      padding: 6px 0;
+    }
+
+    .calendar-grid .day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+
+    .calendar-grid .day.worked {
+      background: #ccfbf1;
+      color: var(--primary-dark);
+      font-weight: 600;
+    }
+
+    .calendar-grid .day.today {
+      border: 2px solid var(--primary);
+    }
+
+    .calendar-grid .day.other-month {
+      opacity: 0.35;
+    }
+
+    /* Utility */
+    .text-center { text-align: center; }
+    .mt-2 { margin-top: 8px; }
+    .mt-3 { margin-top: 12px; }
+    .mb-2 { margin-bottom: 8px; }
+    .hidden { display: none !important; }
+    .flex-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🕒 MomHours</h1>
+    <div class="subtitle">Cayman Islands Work Log</div>
+  </header>
+
+  <main>
+    <!-- HOME / RUNNING PAYROLL -->
+    <section id="view-home" class="view active">
+      <div class="card">
+        <h2>Current Unpaid</h2>
+        <div class="summary-grid">
+          <div class="stat highlight">
+            <div class="label">Hours</div>
+            <div class="value" id="unpaid-hours">0.00</div>
+          </div>
+          <div class="stat highlight">
+            <div class="label">Amount (CI$)</div>
+            <div class="value" id="unpaid-amount">0.00</div>
+          </div>
+        </div>
+        <div class="summary-grid" style="margin-top:10px">
+          <div class="stat">
+            <div class="label">Days Worked</div>
+            <div class="value" id="days-worked" style="font-size:1.3rem">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">Hourly Rate</div>
+            <div class="value" id="current-rate" style="font-size:1.1rem">—</div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-success" onclick="openMarkPaidModal()">✓ Mark Paid</button>
+          <button class="btn btn-secondary" onclick="calculatePayout()">Calculate</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="flex-between">
+          <h2 style="margin:0">Unpaid Shifts</h2>
+          <button class="btn btn-sm" onclick="openAddShiftModal()">+ Add</button>
+        </div>
+        <ul class="shift-list" id="unpaid-list" style="margin-top:14px">
+          <!-- filled by JS -->
+        </ul>
+        <div id="unpaid-empty" class="empty-state hidden">
+          <div class="icon">📭</div>
+          <p>No unpaid shifts yet.<br>Tap “+ Add” to log a day.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADD / EDIT is modal -->
+
+    <!-- HISTORY -->
+    <section id="view-history" class="view">
+      <div class="card">
+        <h2>Paid History</h2>
+        <p class="hint">These records are protected and kept forever.</p>
+        <div id="paid-history-list" style="margin-top:14px">
+          <!-- filled by JS -->
+        </div>
+        <div id="history-empty" class="empty-state hidden">
+          <div class="icon">📋</div>
+          <p>No paid periods yet.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- REPORTS -->
+    <section id="view-reports" class="view">
+      <div class="card">
+        <h2>Monthly Summary</h2>
+        <div class="form-group">
+          <label>Month</label>
+          <input type="month" id="report-month" onchange="renderMonthlyReport()" />
+        </div>
+        <div id="monthly-report">
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Days Worked Calendar</h2>
+        <div class="form-row mb-2">
+          <button class="btn btn-sm btn-secondary" onclick="changeCalendarMonth(-1)">← Prev</button>
+          <button class="btn btn-sm btn-secondary" onclick="changeCalendarMonth(1)">Next →</button>
+        </div>
+        <div class="text-center mb-2" id="calendar-title" style="font-weight:700"></div>
+        <div class="calendar-grid" id="calendar-grid">
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Share / Export</h2>
+        <p class="hint mb-2">Generate a clean summary you can send via WhatsApp.</p>
+        <button class="btn btn-secondary" onclick="shareCurrentPayroll()">Share Current Unpaid</button>
+        <button class="btn btn-secondary mt-2" onclick="exportAllData()">Export All Data (Backup)</button>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="view-settings" class="view">
+      <div class="card">
+        <h2>Hourly Rate</h2>
+        <div class="rate-display" id="settings-rate-display">CI$ 0.00</div>
+        <div class="form-group">
+          <label>New rate (CI$)</label>
+          <input type="number" id="new-rate" step="0.01" min="0" placeholder="e.g. 12.50" />
+        </div>
+        <button class="btn" onclick="saveRate()">Save Rate</button>
+      </div>
+
+      <div class="card">
+        <h2>Data Safety</h2>
+        <p class="hint mb-2">Your data lives only on this device. Export regularly.</p>
+        <button class="btn btn-secondary" onclick="exportAllData()">Download Full Backup</button>
+        <button class="btn btn-secondary mt-2" onclick="importData()">Import Backup</button>
+        <input type="file" id="import-file" accept=".json" class="hidden" onchange="handleImport(event)" />
+      </div>
+
+      <div class="card">
+        <h2>About</h2>
+        <p style="font-size:0.9rem;color:#64748b">
+          MomHours – offline work log for Cayman Islands.<br>
+          Break rule: ≥ 9 hours suggests 1 hour unpaid break (fully editable).<br>
+          Pay cycle: every 2 weeks.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Nav -->
+  <nav>
+    <button class="active" data-view="home" onclick="showView('home')">
+      <span class="icon">🏠</span>
+      Home
+    </button>
+    <button data-view="history" onclick="showView('history')">
+      <span class="icon">📜</span>
+      History
+    </button>
+    <button data-view="reports" onclick="showView('reports')">
+      <span class="icon">📊</span>
+      Reports
+    </button>
+    <button data-view="settings" onclick="showView('settings')">
+      <span class="icon">⚙️</span>
+      Settings
+    </button>
+  </nav>
+
+  <!-- ADD / EDIT SHIFT MODAL -->
+  <div class="modal-overlay" id="shift-modal">
+    <div class="modal">
+      <h3>
+        <span id="shift-modal-title">Add Shift</span>
+        <button class="close-btn" onclick="closeShiftModal()">×</button>
+      </h3>
+
+      <input type="hidden" id="edit-shift-id" />
+
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="shift-date" />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Start time</label>
+          <input type="time" id="shift-start" />
+        </div>
+        <div class="form-group">
+          <label>End time</label>
+          <input type="time" id="shift-end" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Break (hours)</label>
+        <input type="number" id="shift-break" step="0.25" min="0" max="12" value="0" />
+        <div class="break-suggestion" id="break-suggestion">
+          💡 This looks like a full shift (≥ 9 hrs). Suggested unpaid break: <strong>1.0 hour</strong>.
+          <button class="btn btn-sm mt-2" style="width:auto" onclick="applySuggestedBreak()">Use 1.0 hr break</button>
+        </div>
+        <div class="hint">Set to 0 if no break was taken (common on long days).</div>
+      </div>
+
+      <div class="form-group">
+        <label>Note (optional)</label>
+        <input type="text" id="shift-note" placeholder="e.g. overtime, holiday rate..." />
+      </div>
+
+      <div class="card" style="background:#f0fdfa;margin-bottom:16px;padding:12px">
+        <div class="flex-between">
+          <span>Gross hours:</span>
+          <strong id="preview-gross">0.00</strong>
+        </div>
+        <div class="flex-between">
+          <span>Paid hours:</span>
+          <strong id="preview-paid" style="color:var(--primary)">0.00</strong>
+        </div>
+        <div class="flex-between">
+          <span>Estimated pay:</span>
+          <strong id="preview-amount">CI$ 0.00</strong>
+        </div>
+      </div>
+
+      <button class="btn" onclick="saveShift()">Save Shift</button>
+      <button class="btn btn-secondary mt-2" onclick="closeShiftModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- MARK AS PAID MODAL -->
+  <div class="modal-overlay" id="paid-modal">
+    <div class="modal">
+      <h3>
+        Mark as Paid
+        <button class="close-btn" onclick="closeMarkPaidModal()">×</button>
+      </h3>
+      <p class="hint mb-2">Select the unpaid shifts to mark as paid (usually the last 2 weeks).</p>
+
+      <div id="mark-paid-list">
+        <!-- checkboxes filled by JS -->
+      </div>
+
+      <div class="form-group mt-3">
+        <label>Payment date</label>
+        <input type="date" id="payment-date" />
+      </div>
+
+      <div class="form-group">
+        <label>Note (optional)</label>
+        <input type="text" id="payment-note" placeholder="e.g. bi-weekly pay" />
+      </div>
+
+      <div class="card" style="background:#ecfdf5;margin-bottom:16px">
+        <div class="flex-between">
+          <span>Total hours:</span>
+          <strong id="mark-total-hours">0.00</strong>
+        </div>
+        <div class="flex-between">
+          <span>Total amount:</span>
+          <strong id="mark-total-amount" style="color:var(--success)">CI$ 0.00</strong>
+        </div>
+      </div>
+
+      <button class="btn btn-success" onclick="confirmMarkPaid()">Confirm Mark as Paid</button>
+      <button class="btn btn-secondary mt-2" onclick="closeMarkPaidModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ===================== DATA LAYER =====================
+    const STORAGE_KEY = 'momhours_v1';
+
+    function defaultData() {
+      return {
+        settings: {
+          hourlyRate: 0,
+          currency: 'CI$'
+        },
+        shifts: [],          // { id, date, start, end, breakHours, note, paid, paidAt, createdAt }
+        paidPeriods: [],     // { id, paymentDate, note, shiftIds, totalHours, totalAmount, createdAt }
+        version: 1
+      };
+    }
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return defaultData();
+        const data = JSON.parse(raw);
+        // basic migration safety
+        if (!data.shifts) data.shifts = [];
+        if (!data.paidPeriods) data.paidPeriods = [];
+        if (!data.settings) data.settings = { hourlyRate: 0, currency: 'CI$' };
+        return data;
+      } catch (e) {
+        console.error('Load failed', e);
+        return defaultData();
+      }
+    }
+
+    function saveData(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    let appData = loadData();
+
+    // ===================== HELPERS =====================
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    }
+
+    function parseTime(t) {
+      // "HH:MM" -> hours as float
+      if (!t) return 0;
+      const [h, m] = t.split(':').map(Number);
+      return h + (m || 0) / 60;
+    }
+
+    function calcGrossHours(start, end) {
+      let s = parseTime(start);
+      let e = parseTime(end);
+      if (e < s) e += 24; // overnight
+      return Math.round((e - s) * 100) / 100;
+    }
+
+    function formatHours(h) {
+      return (Math.round(h * 100) / 100).toFixed(2);
+    }
+
+    function formatMoney(amount) {
+      return 'CI$ ' + (Math.round(amount * 100) / 100).toFixed(2);
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso + 'T00:00:00');
+      return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function todayISO() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function showToast(msg, duration = 2500) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), duration);
+    }
+
+    // ===================== UI NAVIGATION =====================
+    function showView(name) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('view-' + name).classList.add('active');
+      document.querySelectorAll('nav button').forEach(b => {
+        b.classList.toggle('active', b.dataset.view === name);
+      });
+
+      if (name === 'home') renderHome();
+      if (name === 'history') renderHistory();
+      if (name === 'reports') {
+        // set default month
+        const m = document.getElementById('report-month');
+        if (!m.value) m.value = new Date().toISOString().slice(0, 7);
+        renderMonthlyReport();
+        renderCalendar();
+      }
+      if (name === 'settings') renderSettings();
+    }
+
+    // ===================== HOME =====================
+    function getUnpaidShifts() {
+      return appData.shifts
+        .filter(s => !s.paid && !s.deleted)
+        .sort((a, b) => b.date.localeCompare(a.date) || b.start.localeCompare(a.start));
+    }
+
+    function renderHome() {
+      const unpaid = getUnpaidShifts();
+      const rate = appData.settings.hourlyRate || 0;
+
+      let totalHours = 0;
+      unpaid.forEach(s => {
+        totalHours += (calcGrossHours(s.start, s.end) - (s.breakHours || 0));
+      });
+      totalHours = Math.max(0, totalHours);
+
+      document.getElementById('unpaid-hours').textContent = formatHours(totalHours);
+      document.getElementById('unpaid-amount').textContent = formatHours(totalHours * rate);
+      document.getElementById('days-worked').textContent = unpaid.length;
+      document.getElementById('current-rate').textContent = rate > 0 ? formatMoney(rate) : 'Set rate';
+
+      const list = document.getElementById('unpaid-list');
+      const empty = document.getElementById('unpaid-empty');
+
+      if (unpaid.length === 0) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+
+      list.innerHTML = unpaid.map(s => {
+        const gross = calcGrossHours(s.start, s.end);
+        const paidH = Math.max(0, gross - (s.breakHours || 0));
+        const amount = paidH * rate;
+        return `
+          <li class="shift-item">
+            <div class="info">
+              <div class="date">${formatDate(s.date)}</div>
+              <div class="times">${s.start} – ${s.end}${s.breakHours > 0 ? ` · break ${s.breakHours}h` : ''}</div>
+              ${s.note ? `<div class="times" style="font-style:italic">${s.note}</div>` : ''}
+              <div class="shift-actions">
+                <button onclick="editShift('${s.id}')">Edit</button>
+                <button onclick="deleteShift('${s.id}')">Delete</button>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div class="hours">${formatHours(paidH)} h</div>
+              <div class="amount">${formatMoney(amount)}</div>
+            </div>
+          </li>
+        `;
+      }).join('');
+    }
+
+    // ===================== SHIFT MODAL =====================
+    function openAddShiftModal() {
+      document.getElementById('shift-modal-title').textContent = 'Add Shift';
+      document.getElementById('edit-shift-id').value = '';
+      document.getElementById('shift-date').value = todayISO();
+      document.getElementById('shift-start').value = '07:00';
+      document.getElementById('shift-end').value = '16:00';
+      document.getElementById('shift-break').value = '0';
+      document.getElementById('shift-note').value = '';
+      document.getElementById('break-suggestion').classList.remove('visible');
+      updatePreview();
+      document.getElementById('shift-modal').classList.add('open');
+    }
+
+    function editShift(id) {
+      const s = appData.shifts.find(x => x.id === id);
+      if (!s) return;
+      document.getElementById('shift-modal-title').textContent = 'Edit Shift';
+      document.getElementById('edit-shift-id').value = id;
+      document.getElementById('shift-date').value = s.date;
+      document.getElementById('shift-start').value = s.start;
+      document.getElementById('shift-end').value = s.end;
+      document.getElementById('shift-break').value = s.breakHours || 0;
+      document.getElementById('shift-note').value = s.note || '';
+      updatePreview();
+      document.getElementById('shift-modal').classList.add('open');
+    }
+
+    function closeShiftModal() {
+      document.getElementById('shift-modal').classList.remove('open');
+    }
+
+    function updatePreview() {
+      const start = document.getElementById('shift-start').value;
+      const end = document.getElementById('shift-end').value;
+      const brk = parseFloat(document.getElementById('shift-break').value) || 0;
+      const rate = appData.settings.hourlyRate || 0;
+
+      const gross = calcGrossHours(start, end);
+      const paid = Math.max(0, gross - brk);
+
+      document.getElementById('preview-gross').textContent = formatHours(gross);
+      document.getElementById('preview-paid').textContent = formatHours(paid);
+      document.getElementById('preview-amount').textContent = formatMoney(paid * rate);
+
+      // suggestion
+      const sug = document.getElementById('break-suggestion');
+      if (gross >= 9 && brk === 0) {
+        sug.classList.add('visible');
+      } else {
+        sug.classList.remove('visible');
+      }
+    }
+
+    function applySuggestedBreak() {
+      document.getElementById('shift-break').value = '1';
+      updatePreview();
+    }
+
+    // live preview listeners
+    ['shift-start', 'shift-end', 'shift-break'].forEach(id => {
+      document.getElementById(id).addEventListener('input', updatePreview);
+      document.getElementById(id).addEventListener('change', updatePreview);
+    });
+
+    function saveShift() {
+      const id = document.getElementById('edit-shift-id').value;
+      const date = document.getElementById('shift-date').value;
+      const start = document.getElementById('shift-start').value;
+      const end = document.getElementById('shift-end').value;
+      const breakHours = parseFloat(document.getElementById('shift-break').value) || 0;
+      const note = document.getElementById('shift-note').value.trim();
+
+      if (!date || !start || !end) {
+        showToast('Please fill date, start and end time');
+        return;
+      }
+
+      const gross = calcGrossHours(start, end);
+      if (gross <= 0) {
+        showToast('End time must be after start time');
+        return;
+      }
+
+      if (id) {
+        // edit
+        const s = appData.shifts.find(x => x.id === id);
+        if (s) {
+          s.date = date;
+          s.start = start;
+          s.end = end;
+          s.breakHours = breakHours;
+          s.note = note;
+          s.updatedAt = new Date().toISOString();
+        }
+      } else {
+        // new
+        appData.shifts.push({
+          id: uid(),
+          date,
+          start,
+          end,
+          breakHours,
+          note,
+          paid: false,
+          paidAt: null,
+          createdAt: new Date().toISOString()
+        });
+      }
+
+      saveData(appData);
+      closeShiftModal();
+      renderHome();
+      showToast(id ? 'Shift updated' : 'Shift saved');
+    }
+
+    function deleteShift(id) {
+      if (!confirm('Delete this shift? You can still recover it from a backup if needed.')) return;
+      const s = appData.shifts.find(x => x.id === id);
+      if (s) {
+        s.deleted = true;
+        s.deletedAt = new Date().toISOString();
+        saveData(appData);
+        renderHome();
+        showToast('Shift deleted');
+      }
+    }
+
+    // ===================== MARK AS PAID =====================
+    function openMarkPaidModal() {
+      const unpaid = getUnpaidShifts();
+      if (unpaid.length === 0) {
+        showToast('No unpaid shifts to mark');
+        return;
+      }
+
+      document.getElementById('payment-date').value = todayISO();
+      document.getElementById('payment-note').value = '';
+
+      const container = document.getElementById('mark-paid-list');
+      container.innerHTML = unpaid.map(s => {
+        const gross = calcGrossHours(s.start, s.end);
+        const paidH = Math.max(0, gross - (s.breakHours || 0));
+        return `
+          <label style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #e2e8f0">
+            <input type="checkbox" class="mark-paid-check" value="${s.id}" checked onchange="updateMarkPaidTotals()" />
+            <div style="flex:1">
+              <div style="font-weight:600">${formatDate(s.date)}</div>
+              <div style="font-size:0.85rem;color:#64748b">${s.start}–${s.end} · ${formatHours(paidH)}h</div>
+            </div>
+          </label>
+        `;
+      }).join('');
+
+      updateMarkPaidTotals();
+      document.getElementById('paid-modal').classList.add('open');
+    }
+
+    function closeMarkPaidModal() {
+      document.getElementById('paid-modal').classList.remove('open');
+    }
+
+    function updateMarkPaidTotals() {
+      const checks = document.querySelectorAll('.mark-paid-check:checked');
+      let totalH = 0;
+      const rate = appData.settings.hourlyRate || 0;
+      checks.forEach(c => {
+        const s = appData.shifts.find(x => x.id === c.value);
+        if (s) {
+          const gross = calcGrossHours(s.start, s.end);
+          totalH += Math.max(0, gross - (s.breakHours || 0));
+        }
+      });
+      document.getElementById('mark-total-hours').textContent = formatHours(totalH);
+      document.getElementById('mark-total-amount').textContent = formatMoney(totalH * rate);
+    }
+
+    function confirmMarkPaid() {
+      const checks = document.querySelectorAll('.mark-paid-check:checked');
+      if (checks.length === 0) {
+        showToast('Select at least one shift');
+        return;
+      }
+
+      const paymentDate = document.getElementById('payment-date').value || todayISO();
+      const note = document.getElementById('payment-note').value.trim();
+      const rate = appData.settings.hourlyRate || 0;
+      const shiftIds = [];
+      let totalHours = 0;
+
+      checks.forEach(c => {
+        const s = appData.shifts.find(x => x.id === c.value);
+        if (s) {
+          s.paid = true;
+          s.paidAt = paymentDate;
+          shiftIds.push(s.id);
+          const gross = calcGrossHours(s.start, s.end);
+          totalHours += Math.max(0, gross - (s.breakHours || 0));
+        }
+      });
+
+      const period = {
+        id: uid(),
+        paymentDate,
+        note,
+        shiftIds,
+        totalHours: Math.round(totalHours * 100) / 100,
+        totalAmount: Math.round(totalHours * rate * 100) / 100,
+        createdAt: new Date().toISOString()
+      };
+      appData.paidPeriods.unshift(period);
+
+      saveData(appData);
+      closeMarkPaidModal();
+      renderHome();
+      showToast('Marked as paid – moved to History');
+    }
+
+    // ===================== HISTORY =====================
+    function renderHistory() {
+      const list = document.getElementById('paid-history-list');
+      const empty = document.getElementById('history-empty');
+      const periods = appData.paidPeriods || [];
+
+      if (periods.length === 0) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+
+      list.innerHTML = periods.map(p => {
+        const shifts = (p.shiftIds || []).map(id => appData.shifts.find(s => s.id === id)).filter(Boolean);
+        const dates = shifts.map(s => s.date).sort();
+        const range = dates.length ? `${formatDate(dates[0])} → ${formatDate(dates[dates.length - 1])}` : formatDate(p.paymentDate);
+
+        return `
+          <div class="period-card">
+            <div class="header">
+              <div class="range">${range}</div>
+              <div class="total">${formatMoney(p.totalAmount)}</div>
+            </div>
+            <div style="font-size:0.85rem;color:#64748b">
+              ${formatHours(p.totalHours)} hours · Paid on ${formatDate(p.paymentDate)}
+              ${p.note ? `<br><em>${p.note}</em>` : ''}
+            </div>
+            <div class="mt-2">
+              <button class="btn btn-sm btn-secondary" onclick="sharePeriod('${p.id}')">Share this payslip</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ===================== REPORTS =====================
+    function renderMonthlyReport() {
+      const month = document.getElementById('report-month').value; // YYYY-MM
+      if (!month) return;
+
+      const shifts = appData.shifts.filter(s => !s.deleted && s.date.startsWith(month));
+      const rate = appData.settings.hourlyRate || 0;
+
+      let totalPaidH = 0;
+      let totalUnpaidH = 0;
+      let days = new Set();
+
+      shifts.forEach(s => {
+        const gross = calcGrossHours(s.start, s.end);
+        const paidH = Math.max(0, gross - (s.breakHours || 0));
+        days.add(s.date);
+        if (s.paid) totalPaidH += paidH;
+        else totalUnpaidH += paidH;
+      });
+
+      const totalH = totalPaidH + totalUnpaidH;
+
+      document.getElementById('monthly-report').innerHTML = `
+        <div class="summary-grid">
+          <div class="stat">
+            <div class="label">Days Worked</div>
+            <div class="value" style="font-size:1.3rem">${days.size}</div>
+          </div>
+          <div class="stat">
+            <div class="label">Total Hours</div>
+            <div class="value" style="font-size:1.3rem">${formatHours(totalH)}</div>
+          </div>
+          <div class="stat">
+            <div class="label">Already Paid</div>
+            <div class="value" style="font-size:1.1rem">${formatMoney(totalPaidH * rate)}</div>
+          </div>
+          <div class="stat highlight">
+            <div class="label">Still Unpaid</div>
+            <div class="value" style="font-size:1.1rem">${formatMoney(totalUnpaidH * rate)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    let calendarDate = new Date();
+
+    function changeCalendarMonth(delta) {
+      calendarDate.setMonth(calendarDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      const year = calendarDate.getFullYear();
+      const month = calendarDate.getMonth();
+      document.getElementById('calendar-title').textContent =
+        calendarDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+
+      const firstDay = new Date(year, month, 1);
+      const startDay = firstDay.getDay(); // 0=Sun
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      const workedDates = new Set(
+        appData.shifts
+          .filter(s => !s.deleted && s.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`))
+          .map(s => s.date)
+      );
+
+      const today = todayISO();
+      let html = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+        .map(d => `<div class="day-name">${d}</div>`).join('');
+
+      // empty cells
+      for (let i = 0; i < startDay; i++) {
+        html += `<div class="day other-month"></div>`;
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const classes = ['day'];
+        if (workedDates.has(iso)) classes.push('worked');
+        if (iso === today) classes.push('today');
+        html += `<div class="${classes.join(' ')}">${d}</div>`;
+      }
+
+      document.getElementById('calendar-grid').innerHTML = html;
+    }
+
+    // ===================== SHARE / EXPORT =====================
+    function shareCurrentPayroll() {
+      const unpaid = getUnpaidShifts();
+      const rate = appData.settings.hourlyRate || 0;
+      let totalH = 0;
+      let lines = ['*MomHours – Current Unpaid Payroll*', ''];
+
+      unpaid.forEach(s => {
+        const gross = calcGrossHours(s.start, s.end);
+        const paidH = Math.max(0, gross - (s.breakHours || 0));
+        totalH += paidH;
+        lines.push(`${formatDate(s.date)}: ${s.start}–${s.end} → ${formatHours(paidH)}h${s.note ? ' (' + s.note + ')' : ''}`);
+      });
+
+      lines.push('');
+      lines.push(`*Total: ${formatHours(totalH)} hours*`);
+      lines.push(`*Amount: ${formatMoney(totalH * rate)}*`);
+      lines.push(`Rate: ${formatMoney(rate)}/hr`);
+
+      const text = lines.join('\n');
+      if (navigator.share) {
+        navigator.share({ title: 'MomHours Unpaid Payroll', text }).catch(() => copyToClipboard(text));
+      } else {
+        copyToClipboard(text);
+      }
+    }
+
+    function sharePeriod(periodId) {
+      const p = appData.paidPeriods.find(x => x.id === periodId);
+      if (!p) return;
+
+      const shifts = (p.shiftIds || []).map(id => appData.shifts.find(s => s.id === id)).filter(Boolean);
+      let lines = ['*MomHours – Payslip*', `Paid on: ${formatDate(p.paymentDate)}`, ''];
+
+      shifts.sort((a, b) => a.date.localeCompare(b.date)).forEach(s => {
+        const gross = calcGrossHours(s.start, s.end);
+        const paidH = Math.max(0, gross - (s.breakHours || 0));
+        lines.push(`${formatDate(s.date)}: ${s.start}–${s.end} → ${formatHours(paidH)}h`);
+      });
+
+      lines.push('');
+      lines.push(`*Total hours: ${formatHours(p.totalHours)}*`);
+      lines.push(`*Total amount: ${formatMoney(p.totalAmount)}*`);
+      if (p.note) lines.push(`Note: ${p.note}`);
+
+      const text = lines.join('\n');
+      if (navigator.share) {
+        navigator.share({ title: 'MomHours Payslip', text }).catch(() => copyToClipboard(text));
+      } else {
+        copyToClipboard(text);
+      }
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Copied to clipboard – paste into WhatsApp');
+      }).catch(() => {
+        // fallback
+        prompt('Copy this text:', text);
+      });
+    }
+
+    function exportAllData() {
+      const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `momhours-backup-${todayISO()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Backup downloaded');
+    }
+
+    function importData() {
+      document.getElementById('import-file').click();
+    }
+
+    function handleImport(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (!data.shifts || !data.settings) throw new Error('Invalid file');
+          if (confirm('This will replace all current data with the backup. Continue?')) {
+            appData = data;
+            saveData(appData);
+            renderHome();
+            showToast('Backup restored successfully');
+          }
+        } catch (err) {
+          showToast('Could not read backup file');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+
+    // ===================== SETTINGS =====================
+    function renderSettings() {
+      const rate = appData.settings.hourlyRate || 0;
+      document.getElementById('settings-rate-display').textContent = formatMoney(rate);
+      document.getElementById('new-rate').value = rate || '';
+    }
+
+    function saveRate() {
+      const val = parseFloat(document.getElementById('new-rate').value);
+      if (isNaN(val) || val < 0) {
+        showToast('Enter a valid rate');
+        return;
+      }
+      appData.settings.hourlyRate = Math.round(val * 100) / 100;
+      saveData(appData);
+      renderSettings();
+      renderHome();
+      showToast('Hourly rate saved');
+    }
+
+    function calculatePayout() {
+      const unpaid = getUnpaidShifts();
+      const rate = appData.settings.hourlyRate || 0;
+      if (rate === 0) {
+        showToast('Please set your hourly rate in Settings first');
+        showView('settings');
+        return;
+      }
+      let totalH = 0;
+      unpaid.forEach(s => {
+        const gross = calcGrossHours(s.start, s.end);
+        totalH += Math.max(0, gross - (s.breakHours || 0));
+      });
+      showToast(`Current payout: ${formatMoney(totalH * rate)} for ${formatHours(totalH)} hours`);
+    }
+
+    // ===================== INIT =====================
+    document.addEventListener('DOMContentLoaded', () => {
+      // Register service worker for offline support
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      }
+
+      // First-run: prompt for rate if zero
+      if (!appData.settings.hourlyRate) {
+        showView('settings');
+        showToast('Welcome! Please set your hourly rate first', 4000);
+      } else {
+        renderHome();
+      }
+    });
+  </script>
+</body>
+</html>
